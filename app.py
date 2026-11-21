@@ -248,7 +248,7 @@ def plan_page():
 st.set_page_config(page_title="GreenSense | Tomato planner", page_icon="🌱", layout="wide")
 st.html("""
 <style>
-.stMainBlockContainer {max-width: 1140px; padding-top: 3rem;}
+.stMainBlockContainer {max-width: 1140px; padding-top: 4.5rem;}
 .gs-brand {display:flex;align-items:center;gap:.6rem;font:650 1.15rem/1.5 system-ui;color:#234e36;}
 .gs-mark {background:#d7eacc;color:#245637;padding:.18rem .52rem;border-radius:.55rem;}
 [data-testid="stMetric"] {padding:.65rem .85rem;background:#eff5e9;color:#244c35;border-radius:.65rem;}
