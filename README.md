@@ -16,9 +16,9 @@ On macOS or Linux, use `.venv/bin/python` in the last two commands. The packaged
 
 ## Try the two priorities
 
-1. Keep the default one dispatch slot and eight-day usable age. Generate a plan. Local pickup and wholesale compete for the same slot on Friday.
-2. Select **Use expiring stock** and generate again. Compare order shortfalls, exposure and harvest. Allow two daily slots to remove the Friday conflict.
-3. Change a quantity, delivery day or required remaining life. Regenerate, review allocations, optionally edit, then save. The app rechecks eligibility, quantities and dispatch slots. History records input settings, original and accepted allocations, rationale notes and UTC time in a local SQLite database.
+1. Choose **Show my example plan** on the welcome screen. Read what to pick, what to pack and which customer needs a follow-up.
+2. Choose **Edit inputs & rebuild**, select **Use expiring stock**, then **Build my plan**. Compare the Friday deliveries. Under delivery capacity, allow two orders per day to remove the conflict.
+3. To try your own figures, use **Enter my planning inputs** from the welcome screen. Enter batch weights and expected harvest, then edit or add customer orders within the example week. Review the resulting plan and choose **Save this plan**. Saved plans are kept in the local SQLite database.
 
 Each order may receive a partial shipment on its due date. Picking takes place on the replayed event date. Lot-to-order quantities and harvest quantities are solved in 0.01 kg units; a binary variable activates each order dispatch. The solver fixes the optimum of each objective before optimizing the next one. Priorities switch the order of fulfilled kilograms and expiring opening stock allocated; the final objective minimizes new picking. Remaining stock at its assumed use-by date represents exposure. A disposal record would be needed to count actual waste.
 
