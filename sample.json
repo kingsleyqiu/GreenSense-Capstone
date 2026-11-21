@@ -1,0 +1,101 @@
+{
+  "area_m2": 62.5,
+  "harvest": [
+    {
+      "date": "2020-02-14",
+      "class_a_kg_m2": 0.12
+    },
+    {
+      "date": "2020-02-19",
+      "class_a_kg_m2": 0.5
+    },
+    {
+      "date": "2020-02-24",
+      "class_a_kg_m2": 0.58
+    }
+  ],
+  "sales": [
+    {
+      "date": "2024-03-28",
+      "normalized_sales": 0.1
+    },
+    {
+      "date": "2024-03-30",
+      "normalized_sales": 0.0
+    },
+    {
+      "date": "2024-04-02",
+      "normalized_sales": 0.1
+    },
+    {
+      "date": "2024-04-03",
+      "normalized_sales": 0.1
+    },
+    {
+      "date": "2024-04-04",
+      "normalized_sales": 0.2
+    },
+    {
+      "date": "2024-04-05",
+      "normalized_sales": 0.0
+    },
+    {
+      "date": "2024-04-06",
+      "normalized_sales": 0.2
+    },
+    {
+      "date": "2024-04-07",
+      "normalized_sales": 0.0
+    },
+    {
+      "date": "2024-04-13",
+      "normalized_sales": 0.8
+    },
+    {
+      "date": "2024-04-14",
+      "normalized_sales": 0.3
+    },
+    {
+      "date": "2024-04-15",
+      "normalized_sales": 0.5
+    },
+    {
+      "date": "2024-04-16",
+      "normalized_sales": 0.3
+    },
+    {
+      "date": "2024-04-17",
+      "normalized_sales": 0.2
+    },
+    {
+      "date": "2024-04-18",
+      "normalized_sales": 0.1
+    },
+    {
+      "date": "2024-04-25",
+      "normalized_sales": 0.2
+    },
+    {
+      "date": "2024-04-26",
+      "normalized_sales": 0.2
+    }
+  ],
+  "quality": [
+    {
+      "storage_day": 1,
+      "median_firmness": 4.05
+    },
+    {
+      "storage_day": 4,
+      "median_firmness": 4.43
+    },
+    {
+      "storage_day": 8,
+      "median_firmness": 3.88
+    },
+    {
+      "storage_day": 12,
+      "median_firmness": 3.47
+    }
+  ]
+}
