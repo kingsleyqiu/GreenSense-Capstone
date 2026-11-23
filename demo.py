@@ -1,6 +1,5 @@
-"""Run the GreenSense three-model concept demonstration from PowerShell."""
+"""Demonstrate tomato planting and allocation decisions using public evidence."""
 import argparse
-import math
 from urllib.error import URLError
 
 from advisor import advise
@@ -10,38 +9,40 @@ from models import harvest_signal, market_signal, storage_signal
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--storage-days", type=int, choices=[1, 4, 8, 12], default=8)
-    parser.add_argument("--shipped-kg", type=float, default=0, help="Simulated outgoing stock in kg")
+    parser.add_argument("--treatment", choices=[f"T{i}" for i in range(1, 7)], default="T1")
     args = parser.parse_args()
-    if not math.isfinite(args.shipped_kg) or args.shipped_kg < 0:
-        parser.error("Outbound stock must be a finite, non-negative weight.")
-    try:
-        storage = storage_signal(args.storage_days, args.shipped_kg)
-    except ValueError as exc:
-        parser.error(str(exc))
-    harvest = harvest_signal()
     market = market_signal()
-    print("GREENSENSE   |   Tomato greenhouse decision support\n")
-    print("1. PRE-HARVEST   |   AGC2 harvest records")
-    print(f"   Next recorded harvest event: {harvest['predicted_kg']:.2f} kg predicted "
-          f"for the {harvest['area_m2']} m2 compartment.\n")
-    print("2. STORAGE       |   Simulated stock ledger + tomato quality experiment")
-    print(f"   Opening {storage['opening_kg']:.2f} + received {storage['inbound_kg']:.2f}"
-          f" - shipped {storage['outbound_kg']:.2f} = {storage['available_kg']:.2f} kg available.")
-    print(f"   At storage day {args.storage_days}, predicted firmness is "
-          f"{storage['predicted_firmness']:.2f} kgf/cm2.\n")
-    print("3. MARKET        |   FreshRetailNet retail sales proxy")
-    print(f"   Next-day sales index {market['predicted_sales_index']:.3f}; "
-          f"previous three-day mean {market['previous_3day_mean']:.3f}.\n")
-    print("4. GROWER BRIEF  |   Local Qwen summary and suggested action", flush=True)
+    harvest = harvest_signal()
+    storage = storage_signal(args.storage_days, args.treatment)
+
+    print(f"1. PLANTING OUTLOOK | Ontario greenhouse tomatoes, {market['year']} (tonnes/year)")
+    for key, label in [("estimated_consumption_kg", "Estimated fresh consumption"),
+                       ("exports_kg", "International exports"), ("marketed_kg", "Marketed production")]:
+        score = market["targets"][key]
+        print(f"   {label}: {score['tonnes']:,} t ({score['method']}). "
+              f"2023-25 mean absolute error: {score['test_mae_t']:,} t.")
+        print(f"     Test comparison: MLP {score['mlp_mae_t']:,} t | previous year {score['baseline_mae_t']:,} t.")
+    print("   Consumption is a supply-balance estimate. Provincial flows do not measure unfilled orders.")
+    print(f"\n2. NEXT PICK | Public AGC2 compartment AICU ({harvest['area_m2']} m2)")
+    print(f"   Replay for {harvest['event']}: predicted {harvest['predicted_kg']:.2f} kg, "
+          f"recorded {harvest['observed_kg']:.2f} kg.")
+    print(f"   Last {harvest['checks']} picks: mean absolute error {harvest['mae_kg']:.2f} kg "
+          f"(previous three-pick average {harvest['baseline_mae_kg']:.2f} kg).")
+    print(f"\n3. STORED FRUIT | Public experiment, {args.treatment}, day {args.storage_days}")
+    print(f"   Predicted firmness {storage['predicted_firmness']:.2f} kgf/cm2, "
+          f"measured replicate {storage['held_out_firmness']:.2f} kgf/cm2.")
+    print(f"   {storage['checks']} held-out measurements: mean absolute error {storage['mae']:.2f} kgf/cm2 "
+          f"(same-condition average {storage['baseline_mae']:.2f}).")
+    print("\n4. FARM DECISION | Public data only")
+    print("   Planting area, available stock, confirmed outlets, unused kilograms and financial loss: unknown.")
+    print("   To size a crop: establish a reachable sales volume and marketable yield per unit area.")
+    print("   To track waste: record each batch's sold, processed, own-use and discarded quantities.")
+    print("\n5. GROWER BRIEF | Local Qwen", flush=True)
     try:
-        result = advise(harvest, storage, market)
+        brief = advise(harvest, storage, market)
     except (OSError, URLError, RuntimeError, ValueError, KeyError, IndexError) as exc:
         parser.exit(1, f"Adviser unavailable: {exc}\n")
-    print("   " + result["summary"] + "\n   Suggested action: " + result["advice"])
-    print("\nReplay check (single examples):")
-    print(f"   Observed harvest {harvest['observed_kg']:.2f} kg | "
-          f"Held-out firmness {storage['held_out_firmness']:.2f} kgf/cm2 | "
-          f"Observed sales index {market['observed_sales_index']:.3f}")
+    print(f"   {brief['summary']}\n   Suggested action: {brief['advice']}")
 
 
 if __name__ == "__main__":

@@ -17,13 +17,10 @@ def build(root):
                     records.append([day.isoformat(), float(row["ProdA"])])
         harvest[file.parent.name] = records
     folder = root / "demand_quality"
-    retail = json.loads((folder / "freshretailnet/train_sample_extracted.json").read_text())
-    sales = [[r["dt"], r["sale_amount"], r["stock_hour6_22_cnt"]] for r in retail
-             if r["store_id"] == 0 and r["product_id"] == 38]
     workbook = folder / "mendeley/workbook_cells_extracted.json"
     rows = json.loads(workbook.read_text(encoding="utf-8"))["Planilha1"][1:]
     firmness = [[r[0], r[1], r[2], r[6]] for r in rows]
-    return {"area_m2": 62.5, "harvest": harvest, "sales": sorted(sales), "firmness": firmness}
+    return {"area_m2": 62.5, "harvest": harvest, "firmness": firmness}
 
 
 if __name__ == "__main__":

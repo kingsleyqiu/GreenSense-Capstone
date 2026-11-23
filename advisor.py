@@ -48,36 +48,25 @@ def local_server():
 
 
 def advise(harvest, storage, market):
-    available = storage["available_kg"]
-    incoming = harvest["predicted_kg"]
-    trend = "below" if market["predicted_sales_index"] < market["previous_3day_mean"] else "at or above"
-    stock = f"{available:.2f} kg in storage"
-    harvest_text = f"{incoming:.2f} kg expected at the next harvest"
-    demand = f"Projected sales are {trend} the recent three-day average."
-    quality = f"The batch firmness estimate is {storage['predicted_firmness']:.2f} kgf/cm2."
-    supply = f"The grower has {stock}, with {harvest_text}."
-    # Keep every permissible sentence tied to the correct quantity and unit.
-    summaries = [f"{supply} {demand} {quality}", f"{demand} {supply} {quality}",
-                 f"{quality} {supply} {demand}"]
-    actions = []
-    if available > 0:
-        actions.append("Inspect the stored batch and allocate suitable stock to confirmed orders before picking more.")
-        actions.append("Review stored stock against confirmed orders before setting the next picking quantity.")
-    else:
-        actions.append("Confirm the next harvest and delivery dates before accepting new commitments.")
-        actions.append("Check harvest readiness and flag immediate orders that have no available stock.")
+    targets = market["targets"]
+    market_text = (f"Ontario's {market['year']} estimated fresh consumption forecast is "
+                   f"{targets['estimated_consumption_kg']['tonnes']:,} tonnes and the international "
+                   f"export forecast is {targets['exports_kg']['tonnes']:,} tonnes.")
+    harvest_text = f"The public compartment replay estimates {harvest['predicted_kg']:.2f} kg at its next pick."
+    quality = (f"The {storage['treatment']} experimental batch at day {storage['storage_age_days']} "
+               f"has predicted firmness {storage['predicted_firmness']:.2f} kgf/cm2.")
+    summaries = [f"{market_text} {harvest_text} {quality}", f"{harvest_text} {quality} {market_text}"]
+    actions = [
+        "For planting, compare the regional outlook with your selling channels and expected marketable yield before choosing an area.",
+        "Before allocating fruit, check batch condition, quantities and delivery dates, then identify a use for unallocated stock.",
+    ]
     schema = {"type": "object", "properties": {
         "summary": {"type": "string", "enum": summaries},
         "advice": {"type": "string", "enum": actions}},
         "required": ["summary", "advice"], "additionalProperties": False}
-    signals = {"harvest": harvest, "storage": storage, "market": market}
-    # Held-out answers are for the presenter only. They are unavailable at inference.
-    evidence = {name: {k: v for k, v in data.items() if not k.startswith(("observed_", "held_out_"))}
-                for name, data in signals.items()}
-    prompt = ("Brief the grower using the three signals. Pick the allowed summary with the most relevant "
-              "fact first and the most useful supported action. With stock on hand review existing batches; "
-              "when stock is depleted focus on harvest readiness.\n"
-              + json.dumps(evidence) + "\nResponse options: " + json.dumps(schema["properties"]))
+    prompt = ("Brief a grower using separate public studies. Select a supported summary and action. "
+              "Farm orders, losses, unsold stock and unmet demand are unknown. "
+              + json.dumps(schema["properties"]))
     body = {"model": MODEL, "messages": [{"role": "user", "content": prompt}],
             "temperature": 0, "max_tokens": 190,
             "response_format": {"type": "json_schema", "json_schema": {"name": "advice", "schema": schema}}}

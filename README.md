@@ -1,44 +1,41 @@
-# GreenSense | Greenhouse decision support
+# GreenSense | Tomato greenhouse decision support
 
-PowerShell proof of concept for a tomato grower. Three independently fitted neural networks estimate the next harvest, stored-fruit firmness and the direction of retail sales. A local Qwen language model reads their outputs, summarizes the situation and selects an advisory action. The grower decides what to do.
+This PowerShell proof of concept helps a grower review a planting decision, an upcoming harvest and stored-fruit quality using public observations. The three sources represent different operations, places and dates.
 
 ## Present from Windows PowerShell
 
-Use Windows x64 and Python 3.11–3.14. From this checkout, run the following once. The setup downloads and verifies the Windows CPU runtime and about 398 MB of quantized model weights.
+Use Windows x64 and Python 3.11-3.14. From the repository directory run the following once.
 
-```powershell
+~~~powershell
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
 .\.venv\Scripts\python setup_advisor.py
-```
+~~~
 
-Run the default case and then change one condition for the supervisor:
+Run the default outlook, then compare a different storage age from the same experiment.
 
-```powershell
+~~~powershell
 .\.venv\Scripts\python demo.py
-.\.venv\Scripts\python demo.py --shipped-kg 95.63
-```
+.\.venv\Scripts\python demo.py --storage-days 12
+~~~
 
-The first case has stock available. In the second the grower has shipped all available stock. Watch the stock ledger and advisory action change while the harvest and market inputs stay fixed. To explore the quality model separately, run `demo.py --storage-days 12` with the same interpreter. Valid study ages are 1, 4, 8 and 12 days. All inference runs on the presenting computer after setup. No browser or API key is needed.
+Use --treatment T1 through T6 and --storage-days 1, 4, 8 or 12 to select a published experimental condition. Setup installs a local Windows CPU runtime and about 398 MB of Qwen weights. After setup the demo runs offline. The earlier --shipped-kg simulated ledger has been retired.
 
-## What the backend computes
+## Questions a grower can ask
 
-Each numeric component fits its own small multilayer perceptron with two hidden layers (8 and 4 units), standardized features and a fixed seed. Every run fits the three networks from the included extract. The final section displays one held-out observation per output for inspection. These individual examples do not establish general predictive accuracy.
+| Decision | Public evidence and validation |
+|---|---|
+| How large might next year's Ontario market be? | Show estimated fresh consumption, international exports and marketed production separately in tonnes per year. An 8/4-hidden-unit neural network predicts the three quantities from the preceding year's values and imports. Inputs and targets are standardized using training data only. Select the network or the previous-year forecast per target by rolling mean absolute error in 2016-2022. Report the separate 2023-2025 rolling test using the fixed selection, then fit through 2025 for 2026. Each historical forecast uses only earlier reference years from the current workbook vintage. |
+| How much could the next pick yield in the public example? | Use three previous Class A harvests to predict kg per square metre. Convert to kg for the documented 62.5 m2 AICU compartment. Replay its final five recorded harvests, fitting the network on earlier dates across six compartments and comparing to the previous three-pick average. Dates are observed event dates. |
+| How might stored quality change? | An independent network estimates firmness from treatment and storage day. Train on repeats 1 and 2 and score all 24 third repeats. Compare to the mean of the two training repeats at the same treatment and day. These checks cover the same experiment. Firmness alone has no validated mapping to expiry, safe use or discarded kg. |
 
-| Component | Input and output | Evidence boundary |
-|---|---|---|
-| Pre-harvest | The previous three Class A harvest events predict the next recorded event's kg/m². Multiplication by 62.5 m² gives compartment kg. | Uses five other compartments and AICU history before the final AICU event date. The event date comes from the replay. Timing, maturity and a seven-day harvest schedule are future work. |
-| Storage | Coded treatment and storage age predict firmness in kgf/cm². A separate ledger calculates opening + inbound − outbound. | Replicates 1 and 2 train the network and replicate 3 is held out within the same experiment. Two past AICU events supply example ledger weights. Their combination and shipping activity are scenario assumptions. Firmness has no validated mapping to days before expiry. |
-| Market | Three preceding days of normalized sales and stockout hours predict the next day's sales index. Compare with the previous three-day mean. | A single encoded retail product and store form a sales proxy. Fit only on earlier targets with zero flagged stockout hours. Neither a confirmed order quantity nor a price forecast can be inferred from this index. |
-| Advice | Qwen receives all three signals and chooses an evidence-grounded summary and an inventory-feasible advisory action. | The demo constrains wording to calculated facts to keep the units and comparisons accurate. Held-out measurements are excluded from the prompt. The grower reviews the suggestion. |
+Ontario's estimated fresh consumption equals marketed fresh production plus international imports minus international exports. The workbook estimates interprovincial shipments separately. The consumption series is a supply-balance indicator. Imports have suppliers already. Annual totals do not identify unmet orders, seasonal patterns or an individual farm's reachable sales.
 
-The sources are from different years and operations. Combining them demonstrates the proposed information flow. There is no linked farm history or measured reduction in discarded kilograms.
+Actual planting area, stock, committed sales, processing or own-use capacity, waste and financial loss remain unknown. Sizing a crop requires a sales volume accessible to the farm and its marketable yield per unit area for the same growing period. Recording the final use of each batch would distinguish unsold fruit from discarded fruit. Qwen selects a summary and a planning or allocation action from the available evidence.
 
-## Reproduce the extract
+## Data provenance
 
-`sample.json` contains source observations. With the team's October archive, run `python build_sample.py path/to/data/2026-10-22` to rebuild it.
-
-- Wageningen University & Research, [Autonomous Greenhouse Challenge, edition 2](https://doi.org/10.4121/uuid:88d22c60-21b3-4ea8-90db-20249a5be2a7), CC0. Harvest date and Class A kg/m², all six compartments. Excludes the previously documented out-of-season Reference timestamp.
-- Dingdong-Inc, [FreshRetailNet-50K](https://huggingface.co/datasets/Dingdong-Inc/FreshRetailNet-50K/tree/c374e85975c82816c495acfa904cc55ab14a47d3), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Store 0, encoded product 38, training split. Extracts date, normalized sales and stockout-hour count.
-- Marcelo Jhonatan de Sousa e Sousa, Clarice Aparecida Megguer and Giovana Lopes da Silva, [tomato postharvest quality dataset, v1](https://doi.org/10.17632/9wbk3mcryd.1), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Selects treatment, storage day, replicate and firmness for all 72 measurements. The demonstration uses the T1 treatment label.
-- Local inference uses [llama.cpp](https://github.com/ggml-org/llama.cpp) and the [bartowski quantization of Qwen2.5-0.5B-Instruct](https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF). Versioned URLs and SHA-256 checksums are in `setup_advisor.py`. The process binds to loopback for the duration of the briefing.
+- Government of Ontario, [Aggregated Ontario greenhouse vegetable production](https://data.ontario.ca/en/dataset/aggregated-ontario-greenhouse-vegetable-production), Open Government Licence - Ontario. The [supply-disposition workbook](https://data.ontario.ca/dataset/c01555d1-96ee-46c3-a0a9-3a307bcb8a6f/resource/7216b164-d2e3-4c7d-bc62-d5bf79446da2/download/ontario_greenhouse_vegetable_supply-disposition.xlsx) provides the 2005-2025 extract in ontario_market.csv. On the Tomato sheet, columns D through X are consecutive years. Rows 1, 9, 34, 22 and 56 give year, fresh marketed kg, imported kg, exported kg and estimated fresh consumption kg, respectively. Published values are rounded to the nearest kg in the extract.
+- Wageningen University & Research, [Autonomous Greenhouse Challenge 2](https://doi.org/10.4121/uuid:88d22c60-21b3-4ea8-90db-20249a5be2a7), CC0. Harvest dates and Class A kg per square metre for six compartments.
+- Sousa, Megguer and Silva, [tomato postharvest quality experiment](https://doi.org/10.17632/9wbk3mcryd.1), CC BY 4.0. The sample contains 72 published firmness measurements. To rebuild sample.json from the team archive, run python build_sample.py path/to/data/2026-10-22.
+- Local advice uses [llama.cpp](https://github.com/ggml-org/llama.cpp) and [quantized Qwen2.5-0.5B-Instruct](https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF). setup_advisor.py pins and verifies the downloaded files.
